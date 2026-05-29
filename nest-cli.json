@@ -10,6 +10,15 @@
   "monorepo": true,
   "root": "apps/event-notification-platform",
   "projects": {
+    "consumer": {
+      "type": "application",
+      "root": "apps/consumer",
+      "entryFile": "main",
+      "sourceRoot": "apps/consumer/src",
+      "compilerOptions": {
+        "tsConfigPath": "apps/consumer/tsconfig.app.json"
+      }
+    },
     "event-notification-platform": {
       "type": "application",
       "root": "apps/event-notification-platform",
