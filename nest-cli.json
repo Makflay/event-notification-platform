@@ -1,14 +1,14 @@
 {
   "$schema": "https://json.schemastore.org/nest-cli",
   "collection": "@nestjs/schematics",
-  "sourceRoot": "apps/event-notification-platform/src",
+  "sourceRoot": "apps/producer/src",
   "compilerOptions": {
     "deleteOutDir": true,
     "webpack": true,
-    "tsConfigPath": "apps/event-notification-platform/tsconfig.app.json"
+    "tsConfigPath": "apps/producer/tsconfig.app.json"
   },
   "monorepo": true,
-  "root": "apps/event-notification-platform",
+  "root": "apps/producer",
   "projects": {
     "consumer": {
       "type": "application",
@@ -17,15 +17,6 @@
       "sourceRoot": "apps/consumer/src",
       "compilerOptions": {
         "tsConfigPath": "apps/consumer/tsconfig.app.json"
-      }
-    },
-    "event-notification-platform": {
-      "type": "application",
-      "root": "apps/event-notification-platform",
-      "entryFile": "main",
-      "sourceRoot": "apps/event-notification-platform/src",
-      "compilerOptions": {
-        "tsConfigPath": "apps/event-notification-platform/tsconfig.app.json"
       }
     },
     "producer": {
