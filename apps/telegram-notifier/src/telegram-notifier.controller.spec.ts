@@ -11,7 +11,9 @@ describe('TelegramNotifierController', () => {
       providers: [TelegramNotifierService],
     }).compile();
 
-    telegramNotifierController = app.get<TelegramNotifierController>(TelegramNotifierController);
+    telegramNotifierController = app.get<TelegramNotifierController>(
+      TelegramNotifierController,
+    );
   });
 
   describe('root', () => {
