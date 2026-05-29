@@ -36,6 +36,15 @@
       "compilerOptions": {
         "tsConfigPath": "apps/producer/tsconfig.app.json"
       }
+    },
+    "telegram-notifier": {
+      "type": "application",
+      "root": "apps/telegram-notifier",
+      "entryFile": "main",
+      "sourceRoot": "apps/telegram-notifier/src",
+      "compilerOptions": {
+        "tsConfigPath": "apps/telegram-notifier/tsconfig.app.json"
+      }
     }
   }
 }
