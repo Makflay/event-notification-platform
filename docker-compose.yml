@@ -15,6 +15,39 @@ services:
       retries: 5
     networks:
       - event-notification-network
+  producer:
+    build:
+      context: .
+      dockerfile: apps/producer/Dockerfile
+    container_name: event-notification-producer
+    ports:
+      - '3000:3000'
+    depends_on:
+      rabbitmq:
+        condition: service_healthy
+    networks:
+      - event-notification-network
+  consumer:
+    build:
+      context: .
+      dockerfile: apps/consumer/Dockerfile
+    container_name: event-notification-consumer
+    ports:
+      - '3001:3000'
+    depends_on:
+      rabbitmq:
+        condition: service_healthy
+    networks:
+      - event-notification-network
+  telegram-notifier:
+    build:
+      context: .
+      dockerfile: apps/telegram-notifier/Dockerfile
+    container_name: event-notification-telegram-notifier
+    ports:
+      - '3002:3000'
+    networks:
+      - event-notification-network
 
 networks:
   event-notification-network:
