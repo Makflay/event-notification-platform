@@ -3,7 +3,7 @@ import { ProducerController } from './producer.controller';
 import { ProducerService } from './producer.service';
 
 import { ConfigModule } from '@nestjs/config';
-import { RabbitMqModule } from './infrastrucutre/rabbitmq/rabbitmq.module';
+import { RabbitMqModule } from './infrastructure/rabbitmq/rabbitmq.module';
 
 @Module({
   imports: [
