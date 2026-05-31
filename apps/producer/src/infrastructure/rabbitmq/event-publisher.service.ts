@@ -1,8 +1,9 @@
 import { Inject, Injectable, Logger } from '@nestjs/common';
-import { ClientProxy } from '@nestjs/microservices';
+import { ClientProxy, RmqRecordBuilder } from '@nestjs/microservices';
 import { EventDto, EventType, generateEventId } from '@app/shared';
 import { firstValueFrom } from 'rxjs';
 import { RABBITMQ_CLIENT } from './rabbitmq.constants';
+import { EventSerializer } from './event.serializer';
 
 @Injectable()
 export class EventPublishService {
@@ -11,6 +12,7 @@ export class EventPublishService {
   constructor(
     @Inject(RABBITMQ_CLIENT)
     private readonly client: ClientProxy,
+    private readonly eventSerializer: EventSerializer,
   ) {}
 
   async publish(
@@ -24,7 +26,15 @@ export class EventPublishService {
       createdAt: new Date().toISOString(),
     };
 
-    await firstValueFrom(this.client.emit(type, event));
+    const serializedEvent = this.eventSerializer.serializeEvent(event);
+
+    const record = new RmqRecordBuilder(serializedEvent)
+      .setOptions({
+        contentType: 'application/json',
+      })
+      .build();
+
+    await firstValueFrom(this.client.emit(type, record));
 
     this.logger.log(
       `Event published successfully: ${event.id} (${event.type})`,
