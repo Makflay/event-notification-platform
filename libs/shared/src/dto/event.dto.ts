@@ -1,15 +1,16 @@
-import { IsDateString, IsObject, IsString, IsUUID } from 'class-validator';
+import { IsDateString, IsObject, IsEnum, IsUUID } from 'class-validator';
+import { EventType } from '../enums/event-type.enum';
 
 export class EventDto {
   @IsUUID()
-  id: string;
+  id!: string;
 
-  @IsString()
-  type: string;
+  @IsEnum(EventType)
+  type!: EventType;
 
   @IsObject()
-  payload: Record<string, unknown>;
+  payload!: Record<string, unknown>;
 
   @IsDateString()
-  createdAt: string;
+  createdAt!: string;
 }
