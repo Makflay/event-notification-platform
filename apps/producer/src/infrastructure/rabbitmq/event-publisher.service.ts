@@ -31,13 +31,17 @@ export class EventPublishService {
     const record = new RmqRecordBuilder(serializedEvent)
       .setOptions({
         contentType: 'application/json',
+        headers: {
+          eventId: event.id,
+          eventType: event.type,
+        },
       })
       .build();
 
     await firstValueFrom(this.client.emit(type, record));
 
     this.logger.log(
-      `Event published successfully: ${event.id} (${event.type})`,
+      `Event published successfully: id=${event.id}, type=(${event.type})`,
     );
 
     return event;
