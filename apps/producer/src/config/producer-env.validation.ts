@@ -10,6 +10,16 @@ const producerEnvSchema = z.object({
       'RABBITMQ_URL must start with amqp:// or amqps://',
     ),
   RABBITMQ_QUEUE: z.string().min(1),
+  RABBITMQ_PUBLISH_RETRY_ATTEMPTS: z.coerce
+    .number()
+    .int()
+    .positive()
+    .default(3),
+  RABBITMQ_PUBLISH_RETRY_DELAY_MS: z.coerce
+    .number()
+    .int()
+    .nonnegative()
+    .default(1000),
 });
 
 export function validateProducerEnv(config: Record<string, unknown>) {

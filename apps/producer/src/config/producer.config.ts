@@ -9,6 +9,8 @@ export default registerAs('producer', () => {
     rabbitmq: {
       url: env.RABBITMQ_URL,
       queue: env.RABBITMQ_QUEUE,
+      publishRetryAttempts: env.RABBITMQ_PUBLISH_RETRY_ATTEMPTS,
+      publishRetryDelayMs: env.RABBITMQ_PUBLISH_RETRY_DELAY_MS,
     },
   };
 });

@@ -15,6 +15,8 @@ export class EventPublishService implements OnModuleInit, OnModuleDestroy {
   private connection!: ChannelModel;
   private channel!: ConfirmChannel;
   private queue!: string;
+  private publishRetryAttempts!: number;
+  private publishRetryDelayMs!: number;
 
   constructor(
     private readonly configService: ConfigService,
@@ -36,16 +38,44 @@ export class EventPublishService implements OnModuleInit, OnModuleDestroy {
       durable: true,
     });
     this.logger.log(`RabbitMQ publisher connected. Queue=${this.queue}`);
+
+    this.publishRetryAttempts = this.configService.getOrThrow<number>(
+      'producer.rabbitmq.publishRetryAttempts',
+    );
+
+    this.publishRetryDelayMs = this.configService.getOrThrow<number>(
+      'producer.rabbitmq.publishRetryDelayMs',
+    );
+  }
+
+  private async delay(ms: number): Promise<void> {
+    await new Promise((resolve) => setTimeout(resolve, ms));
+  }
+
+  private async sendEventToQueue(
+    event: EventDto,
+    serializedEvent: Buffer,
+  ): Promise<void> {
+    if (!this.channel) {
+      throw new Error('RabbitMQ channel is not initialized');
+    }
+
+    this.channel.sendToQueue(this.queue, serializedEvent, {
+      persistent: true,
+      contentType: 'application/json',
+      headers: {
+        eventId: event.id,
+        eventType: event.type,
+      },
+    });
+
+    await this.channel.waitForConfirms();
   }
 
   async publish(
     type: EventType,
     payload: Record<string, unknown>,
   ): Promise<EventDto> {
-    if (!this.channel) {
-      throw new Error('RabbitMQ channel is not initialized');
-    }
-
     const event: EventDto = {
       id: generateEventId(),
       type,
@@ -55,36 +85,51 @@ export class EventPublishService implements OnModuleInit, OnModuleDestroy {
 
     const serializedEvent = this.eventSerializer.serializeEvent(event);
 
-    try {
-      this.channel.sendToQueue(this.queue, serializedEvent, {
-        persistent: true,
-        contentType: 'application/json',
-        headers: {
-          eventId: event.id,
-          eventType: event.type,
-        },
-      });
+    let lastError: unknown;
 
-      await this.channel.waitForConfirms();
+    for (let attempt = 1; attempt <= this.publishRetryAttempts; attempt += 1) {
+      try {
+        await this.sendEventToQueue(event, serializedEvent);
+        this.logger.log(
+          `Event published successfully: id=${event.id}, type=(${event.type})`,
+        );
 
-      this.logger.log(
-        `Event published successfully: id=${event.id}, type=(${event.type})`,
-      );
+        return event;
+      } catch (error) {
+        lastError = error;
 
-      return event;
-    } catch (error) {
-      this.logger.error(
-        `RabbitMQ confirm failed: id=${event.id}, type=${event.type}`,
-        error instanceof Error ? error.stack : String(error),
-      );
-      throw error;
+        this.logger.warn(
+          `Failed to publish event: id=${event.id}, type=${event.type}, attempt=${attempt}/${this.publishRetryAttempts}`,
+          error instanceof Error ? error.message : String(error),
+        );
+
+        if (attempt < this.publishRetryAttempts) {
+          await this.delay(this.publishRetryDelayMs);
+        }
+      }
     }
+
+    this.logger.error(
+      `RabbitMQ publish failed after retries: id=${event.id}, type=${event.type}`,
+      lastError instanceof Error ? lastError.stack : String(lastError),
+    );
+
+    throw lastError instanceof Error
+      ? lastError
+      : new Error('RabbitMQ publish failed after retries');
   }
 
   async onModuleDestroy(): Promise<void> {
-    await this.channel?.close();
-    await this.connection?.close();
+    try {
+      await this.channel?.close();
+      await this.connection?.close();
 
-    this.logger.log('RabbitMQ publisher connection closed');
+      this.logger.log('RabbitMQ publisher connection closed');
+    } catch (error) {
+      this.logger.warn(
+        'Failed to close RabbitMQ publisher connection',
+        error instanceof Error ? error.message : String(error),
+      );
+    }
   }
 }
