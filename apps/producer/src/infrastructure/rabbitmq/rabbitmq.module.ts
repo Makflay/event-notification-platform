@@ -3,6 +3,7 @@ import { ConfigModule, ConfigService } from '@nestjs/config';
 import { ClientsModule, Transport } from '@nestjs/microservices';
 import { RABBITMQ_CLIENT } from './rabbitmq.constants';
 import { RabbitMqConnection } from './rabbitmq.connection';
+import { EventPublishService } from './event-publisher.service';
 
 @Module({
   imports: [
@@ -24,7 +25,7 @@ import { RabbitMqConnection } from './rabbitmq.connection';
       },
     ]),
   ],
-  providers: [RabbitMqConnection],
-  exports: [ClientsModule],
+  providers: [RabbitMqConnection, EventPublishService],
+  exports: [ClientsModule, EventPublishService],
 })
 export class RabbitMqModule {}
