@@ -1,0 +1,25 @@
+import { z } from 'zod';
+
+const consumerEnvSchema = z.object({
+  CONSUMER_PORT: z.coerce.number().int().positive().default(3001),
+  RABBITMQ_URL: z
+    .string()
+    .min(1)
+    .refine(
+      (value) => value.startsWith('amqp://') || value.startsWith('amqps://'),
+      'RABBITMQ_URL must start with amqp:// or amqps://',
+    ),
+  RABBITMQ_QUEUE: z.string().min(1),
+});
+
+export function validateConsumerEnv(config: Record<string, unknown>) {
+  const result = consumerEnvSchema.safeParse(config);
+
+  if (!result.success) {
+    throw new Error(
+      `Consumer environment validation failed: ${result.error.message}`,
+    );
+  }
+
+  return result.data;
+}
