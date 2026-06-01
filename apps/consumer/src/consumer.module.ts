@@ -4,7 +4,7 @@ import { ConsumerController } from './consumer.controller';
 import { ConsumerService } from './consumer.service';
 import consumerConfig from './config/consumer.config';
 import { validateConsumerEnv } from './config/consumer-env.validation';
-import { RabbitMqModule } from './infrastructure/rabbitmq.module';
+import { RabbitMqModule } from './infrastructure/rabbitmq/rabbitmq.module';
 @Module({
   imports: [
     ConfigModule.forRoot({
