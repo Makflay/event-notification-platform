@@ -8,6 +8,7 @@ import { ConfigService } from '@nestjs/config';
 import { EventDto } from '@app/shared';
 import { Channel, ChannelModel, ConsumeMessage, connect } from 'amqplib';
 import { EventHandlerService } from '../application/event-handler.service';
+import { ProcessedEventsStore } from '../application/processed-events.store';
 
 @Injectable()
 export class QueueListenerService implements OnModuleInit, OnModuleDestroy {
@@ -19,6 +20,7 @@ export class QueueListenerService implements OnModuleInit, OnModuleDestroy {
   constructor(
     private readonly configService: ConfigService,
     private readonly eventHandlerService: EventHandlerService,
+    private readonly processedEventStore: ProcessedEventsStore,
   ) {}
 
   async onModuleInit(): Promise<void> {
@@ -123,8 +125,17 @@ export class QueueListenerService implements OnModuleInit, OnModuleDestroy {
       `Processing event: id=${event.id}, type=${event.type}, attempt=${retryCount + 1}`,
     );
 
+    if (this.processedEventStore.has(event.id)) {
+      this.logger.warn(
+        `Duplicate event skipped: id=${event.id}, type=${event.type}`,
+      );
+      this.channel.ack(message);
+      return;
+    }
+
     try {
       await this.eventHandlerService.handle(event);
+      this.processedEventStore.add(event.id);
       this.channel.ack(message);
       this.logger.log(`ACK sent for event: id=${event.id}, type=${event.type}`);
     } catch (error) {
