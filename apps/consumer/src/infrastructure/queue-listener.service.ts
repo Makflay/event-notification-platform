@@ -7,6 +7,7 @@ import {
 import { ConfigService } from '@nestjs/config';
 import { EventDto } from '@app/shared';
 import { Channel, ChannelModel, ConsumeMessage, connect } from 'amqplib';
+import { EventHandlerService } from '../application/event-handler.service';
 
 @Injectable()
 export class QueueListenerService implements OnModuleInit, OnModuleDestroy {
@@ -14,7 +15,10 @@ export class QueueListenerService implements OnModuleInit, OnModuleDestroy {
   private connection!: ChannelModel;
   private channel!: Channel;
 
-  constructor(private readonly configService: ConfigService) {}
+  constructor(
+    private readonly configService: ConfigService,
+    private readonly eventHandlerService: EventHandlerService,
+  ) {}
 
   async onModuleInit(): Promise<void> {
     const rabbitmq = this.configService.getOrThrow<string>(
@@ -34,24 +38,7 @@ export class QueueListenerService implements OnModuleInit, OnModuleDestroy {
     await this.channel.consume(
       queue,
       (message) => {
-        if (!message) {
-          return;
-        }
-        try {
-          const event = this.deserializeMessage(message);
-          this.logger.log(`Received event: id=${event.id}, type=${event.type}`);
-          this.channel.ack(message);
-          this.logger.log(
-            `ACK sent for event: id=${event.id}, type=${event.type}`,
-          );
-        } catch (error) {
-          this.logger.error(
-            'Failed to parse RabbitMQ message',
-            error instanceof Error ? error.stack : undefined,
-          );
-
-          this.channel.nack(message, false, true);
-        }
+        void this.handleMessage(message);
       },
       {
         noAck: false,
@@ -59,6 +46,37 @@ export class QueueListenerService implements OnModuleInit, OnModuleDestroy {
     );
 
     this.logger.log(`Listening RabbitMQ queue: ${queue}`);
+  }
+
+  private async handleMessage(message: ConsumeMessage | null): Promise<void> {
+    if (!message) {
+      return;
+    }
+    let event: EventDto | null = null;
+    try {
+      event = this.deserializeMessage(message);
+      this.logger.log(`Received event: id=${event.id}, type=${event.type}`);
+    } catch (error) {
+      this.logger.error(
+        'Failed to deserialize RabbitMQ message. Message will be ACKed without requeue.',
+        error instanceof Error ? error.stack : undefined,
+      );
+
+      this.channel.ack(message);
+      return;
+    }
+
+    try {
+      await this.eventHandlerService.handle(event);
+      this.channel.ack(message);
+      this.logger.log(`ACK sent for event: id=${event.id}, type=${event.type}`);
+    } catch (error) {
+      this.logger.error(
+        `Failed to handle event: id=${event.id}, type=${event.type}. Message will be NACKed with requeue.`,
+        error instanceof Error ? error.stack : undefined,
+      );
+      this.channel.nack(message, false, true);
+    }
   }
 
   private isEventDto(value: unknown): value is EventDto {
@@ -79,7 +97,15 @@ export class QueueListenerService implements OnModuleInit, OnModuleDestroy {
 
   private deserializeMessage(message: ConsumeMessage): EventDto {
     const rawContent = message.content.toString('utf-8');
-    const parsed: unknown = JSON.parse(rawContent);
+    let parsed: unknown;
+    //const
+    try {
+      parsed = JSON.parse(rawContent);
+    } catch (error) {
+      throw new Error(
+        `Invalid JSON message: ${error instanceof Error ? error.message : 'Unknown JSON parse error'}`,
+      );
+    }
 
     if (!this.isEventDto(parsed)) {
       throw new Error('Invalid event message structure');
