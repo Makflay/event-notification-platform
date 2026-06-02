@@ -37,21 +37,55 @@ export class QueueListenerService implements OnModuleInit, OnModuleDestroy {
         if (!message) {
           return;
         }
-        const event = this.deserializeMessage(message);
-        this.logger.log(`Received event: id=${event.id}, type=${event.type}`);
+        try {
+          const event = this.deserializeMessage(message);
+          this.logger.log(`Received event: id=${event.id}, type=${event.type}`);
+          this.channel.ack(message);
+          this.logger.log(
+            `ACK sent for event: id=${event.id}, type=${event.type}`,
+          );
+        } catch (error) {
+          this.logger.error(
+            'Failed to parse RabbitMQ message',
+            error instanceof Error ? error.stack : undefined,
+          );
+
+          this.channel.nack(message, false, true);
+        }
       },
       {
-        noAck: true,
+        noAck: false,
       },
     );
 
     this.logger.log(`Listening RabbitMQ queue: ${queue}`);
   }
 
+  private isEventDto(value: unknown): value is EventDto {
+    if (!value || typeof value !== 'object') {
+      return false;
+    }
+
+    const event = value as Partial<EventDto>;
+
+    return (
+      typeof event.id === 'string' &&
+      typeof event.type === 'string' &&
+      typeof event.payload === 'object' &&
+      event.payload !== null &&
+      typeof event.createdAt === 'string'
+    );
+  }
+
   private deserializeMessage(message: ConsumeMessage): EventDto {
     const rawContent = message.content.toString('utf-8');
+    const parsed: unknown = JSON.parse(rawContent);
 
-    return JSON.parse(rawContent) as EventDto;
+    if (!this.isEventDto(parsed)) {
+      throw new Error('Invalid event message structure');
+    }
+
+    return parsed;
   }
 
   async onModuleDestroy(): Promise<void> {
