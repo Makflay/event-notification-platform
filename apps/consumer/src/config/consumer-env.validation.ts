@@ -10,6 +10,13 @@ const consumerEnvSchema = z.object({
       'RABBITMQ_URL must start with amqp:// or amqps://',
     ),
   RABBITMQ_QUEUE: z.string().min(1),
+  RABBITMQ_PUBLISH_RETRY_ATTEMPTS: z.coerce
+    .number()
+    .int()
+    .nonnegative()
+    .default(3),
+  RABBITMQ_DLX_EXCHANGE: z.string().min(1).default('events.dlx'),
+  RABBITMQ_DLQ: z.string().min(1).default('events.dlq'),
 });
 
 export function validateConsumerEnv(config: Record<string, unknown>) {

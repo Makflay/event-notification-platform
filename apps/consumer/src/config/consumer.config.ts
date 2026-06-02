@@ -9,6 +9,9 @@ export default registerAs('consumer', () => {
     rabbitmq: {
       url: env.RABBITMQ_URL,
       queue: env.RABBITMQ_QUEUE,
+      consumerRetryAttempts: env.RABBITMQ_PUBLISH_RETRY_ATTEMPTS,
+      dlxExchange: env.RABBITMQ_DLX_EXCHANGE,
+      dlq: env.RABBITMQ_DLQ,
     },
   };
 });
