@@ -1,12 +1,12 @@
 import { Module } from '@nestjs/common';
 import { ConfigModule } from '@nestjs/config';
-import { TelegramNotifierController } from './telegram-notifier.controller';
 import { TelegramNotifierService } from './telegram-notifier.service';
 import telegramNotifierConfig from './config/telegram-notifier.config';
 import { validateTelegramNotifierEnv } from './config/telegram-notifier-env.validation';
 import { TelegramApiClient } from './infrastructure/telegram-api.client';
 import { NotificationService } from './application/services/notification.service';
 import { NotificationTemplateService } from './application/templates/notification-template.service';
+import { TelegramNotificationController } from './presentation/controllers/telegram-notification.controller';
 @Module({
   imports: [
     ConfigModule.forRoot({
@@ -15,7 +15,7 @@ import { NotificationTemplateService } from './application/templates/notificatio
       validate: validateTelegramNotifierEnv,
     }),
   ],
-  controllers: [TelegramNotifierController],
+  controllers: [TelegramNotificationController],
   providers: [
     TelegramNotifierService,
     TelegramApiClient,

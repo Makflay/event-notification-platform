@@ -23,7 +23,7 @@ export class TelegramApiClient {
           'Content-Type': 'application/json',
         },
         body: JSON.stringify({
-          chatId: chatId,
+          chat_id: chatId,
           text,
         }),
       });
