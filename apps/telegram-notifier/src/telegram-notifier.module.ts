@@ -4,6 +4,8 @@ import { TelegramNotifierController } from './telegram-notifier.controller';
 import { TelegramNotifierService } from './telegram-notifier.service';
 import telegramNotifierConfig from './config/telegram-notifier.config';
 import { validateTelegramNotifierEnv } from './config/telegram-notifier-env.validation';
+import { TelegramApiClient } from './infrastructure/telegram-api.client';
+import { NotificationService } from './application/services/notification.service';
 @Module({
   imports: [
     ConfigModule.forRoot({
@@ -13,6 +15,6 @@ import { validateTelegramNotifierEnv } from './config/telegram-notifier-env.vali
     }),
   ],
   controllers: [TelegramNotifierController],
-  providers: [TelegramNotifierService],
+  providers: [TelegramNotifierService, TelegramApiClient, NotificationService],
 })
 export class TelegramNotifierModule {}
