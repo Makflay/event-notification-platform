@@ -1,15 +1,28 @@
-import { IsObject, IsOptional, IsString } from 'class-validator';
+import { ApiPropertyOptional } from '@nestjs/swagger';
+import { IsObject, IsString } from 'class-validator';
 
 export class SendTelegramNotificationDto {
-  @IsOptional()
+  @ApiPropertyOptional({
+    example: 'Manual notification',
+    description: 'Notification title',
+  })
   @IsString()
   title!: string;
 
-  @IsOptional()
+  @ApiPropertyOptional({
+    example: 'Hello from telegram-notifier',
+    description: 'Notification message',
+  })
   @IsString()
   message!: string;
 
-  @IsOptional()
+  @ApiPropertyOptional({
+    type: Object,
+    example: {
+      source: 'manual-test',
+    },
+    description: 'Additional notification metadata',
+  })
   @IsObject()
   metadata!: Record<string, unknown>;
 }

@@ -33,8 +33,97 @@ The project is planned with the following technical requirements:
 - SOLID principles
 - Clean Architecture approach
 
-## Project Status
+## API Usage Examples
 
-The project is currently in the initial setup stage.
+### Producer: Publish System Test Event
 
-Core services, infrastructure, and implementation details will be added incrementally.
+Publishes a test event to RabbitMQ.
+
+```bash
+curl -X POST http://localhost:3000/events \
+  -H "Content-Type: application/json" \
+  -d '{"type":"system.test.event","payload":{"message":"Hello from producer"}}'
+```
+
+Successful response:
+
+```json
+{
+  "eventId": "550e8400-e29b-41d4-a716-446655440000",
+  "status": "published"
+}
+```
+
+### Producer: Publish Telegram Notification Event
+
+Publishes an event that can be processed later as a Telegram notification.
+
+```bash
+curl -X POST http://localhost:3000/events \
+  -H "Content-Type: application/json" \
+  -d '{"type":"telegram.notification.created","payload":{"title":"New notification","message":"Hello from RabbitMQ","metadata":{"source":"producer","priority":"normal"}}}'
+```
+
+Successful response:
+
+```json
+{
+  "eventId": "550e8400-e29b-41d4-a716-446655440000",
+  "status": "published"
+}
+```
+
+### Telegram Notifier: Send Notification Manually
+
+Sends a Telegram notification directly through the temporary HTTP endpoint.
+
+```bash
+curl -X POST http://localhost:3002/notifications/telegram \
+  -H "Content-Type: application/json" \
+  -d '{"title":"Manual notification","message":"Hello from telegram-notifier","metadata":{"source":"manual-test"}}'
+```
+
+Successful response:
+
+```json
+{
+  "status": "sent",
+  "provider": "telegram"
+}
+```
+
+### Validation Error Example
+
+Request with unsupported event type:
+
+```bash
+curl -X POST http://localhost:3000/events \
+  -H "Content-Type: application/json" \
+  -d '{"type":"unknown.event","payload":{"message":"Invalid event"}}'
+```
+
+Example error response:
+
+```json
+{
+  "message": [
+    "type must be one of the following values: telegram.notification.created, system.test.event"
+  ],
+  "error": "Bad Request",
+  "statusCode": 400
+}
+```
+
+### Telegram Error Example
+
+If the Telegram bot token or chat id is invalid, the Telegram notifier can return an error response.
+
+Example:
+
+```json
+{
+  "message": "Telegram chat id is invalid",
+  "error": "Bad Request",
+  "statusCode": 400
+}
+```
