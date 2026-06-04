@@ -5,7 +5,7 @@ import { EventDto, EventType } from '@app/shared';
 export class EventHandlerService {
   private readonly logger = new Logger(EventHandlerService.name);
 
-  async handle(event: EventDto): Promise<void> {
+  handle(event: EventDto): void {
     switch (event.type) {
       case EventType.SYSTEM_TEST_EVENT:
         this.logger.log(

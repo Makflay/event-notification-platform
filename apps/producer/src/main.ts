@@ -29,4 +29,7 @@ async function bootstrap() {
 
   await app.listen(port);
 }
-bootstrap();
+bootstrap().catch((error) => {
+  console.error('Failed to bootstrap producer', error);
+  process.exit(1);
+});

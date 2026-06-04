@@ -10,7 +10,7 @@ const consumerEnvSchema = z.object({
       'RABBITMQ_URL must start with amqp:// or amqps://',
     ),
   RABBITMQ_QUEUE: z.string().min(1),
-  RABBITMQ_PUBLISH_RETRY_ATTEMPTS: z.coerce
+  RABBITMQ_CONSUMER_RETRY_ATTEMPTS: z.coerce
     .number()
     .int()
     .nonnegative()

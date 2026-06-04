@@ -8,7 +8,7 @@ import {
   ApiTags,
 } from '@nestjs/swagger';
 import { EventType } from '@app/shared';
-import { EventPublishService } from '../infrastructure/rabbitmq/event-publisher.service';
+import { EventPublishService } from '../infrastructure/event-publisher.service';
 import { PublishEventRequestDto } from './dto/publish-event-request.dto';
 import { PublishEventResponseDto } from './dto/publish-event-response.dto';
 

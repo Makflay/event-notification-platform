@@ -19,6 +19,8 @@ services:
     build:
       context: .
       dockerfile: apps/producer/Dockerfile
+    env_file:
+      - .env.docker
     container_name: event-notification-producer
     ports:
       - '3000:3000'
@@ -31,9 +33,11 @@ services:
     build:
       context: .
       dockerfile: apps/consumer/Dockerfile
+    env_file:
+      - .env.docker
     container_name: event-notification-consumer
     ports:
-      - '3001:3000'
+      - '3001:3001'
     depends_on:
       rabbitmq:
         condition: service_healthy
@@ -43,9 +47,11 @@ services:
     build:
       context: .
       dockerfile: apps/telegram-notifier/Dockerfile
+    env_file:
+      - .env.docker
     container_name: event-notification-telegram-notifier
     ports:
-      - '3002:3000'
+      - '3002:3002'
     networks:
       - event-notification-network
 
