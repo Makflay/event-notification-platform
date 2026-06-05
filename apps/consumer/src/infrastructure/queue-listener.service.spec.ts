@@ -148,6 +148,42 @@ describe('QueueListenerService', () => {
     expect(processedEventsStore.add).not.toHaveBeenCalled();
   });
 
+  it('republishes telegram notification event for retry when telegram sending fails', async () => {
+    const event = createEvent({
+      type: EventType.TELEGRAM_NOTIFICATION_CREATED,
+      payload: {
+        title: 'Telegram notification',
+        message: 'Hello from RabbitMQ',
+        metadata: {
+          source: 'unit-test',
+        },
+      },
+    });
+    const message = createMessage(event, { 'x-retry-count': 0 });
+    const error = new Error('Telegram API is unavailable');
+
+    processedEventsStore.has.mockReturnValue(false);
+    eventHandlerService.handle.mockRejectedValue(error);
+
+    await service.handleMessage(message);
+
+    expect(eventHandlerService.handle).toHaveBeenCalledWith(event);
+    expect(mockChannel.sendToQueue).toHaveBeenCalledWith(
+      'events_queue',
+      message.content,
+      {
+        contentType: 'application/json',
+        persistent: true,
+        headers: {
+          'x-retry-count': 1,
+        },
+      },
+    );
+    expect(mockChannel.ack).toHaveBeenCalledWith(message);
+    expect(mockChannel.publish).not.toHaveBeenCalled();
+    expect(processedEventsStore.add).not.toHaveBeenCalled();
+  });
+
   it('sends message to DLQ after retry limit is exceeded', async () => {
     const event = createEvent();
     const message = createMessage(event, { 'x-retry-count': 2 });
@@ -176,6 +212,44 @@ describe('QueueListenerService', () => {
     );
     expect(options?.headers?.['x-retry-count']).toBe(2);
     expect(typeof options?.headers?.deadLetteredAt).toBe('string');
+    expect(mockChannel.ack).toHaveBeenCalledWith(message);
+    expect(mockChannel.sendToQueue).not.toHaveBeenCalled();
+    expect(processedEventsStore.add).not.toHaveBeenCalled();
+  });
+
+  it('sends telegram notification event to DLQ after retry limit is exceeded', async () => {
+    const event = createEvent({
+      type: EventType.TELEGRAM_NOTIFICATION_CREATED,
+      payload: {
+        title: 'Telegram notification',
+        message: 'Hello from RabbitMQ',
+        metadata: {
+          source: 'unit-test',
+        },
+      },
+    });
+    const message = createMessage(event, { 'x-retry-count': 2 });
+    const error = new Error('Invalid Telegram chat id');
+
+    processedEventsStore.has.mockReturnValue(false);
+    eventHandlerService.handle.mockRejectedValue(error);
+
+    await service.handleMessage(message);
+
+    expect(mockChannel.publish).toHaveBeenCalledTimes(1);
+
+    const [exchange, routingKey, content, options] =
+      mockChannel.publish.mock.calls[0];
+
+    expect(exchange).toBe('events.dlx');
+    expect(routingKey).toBe('events.dlq');
+    expect(content).toBe(message.content);
+    expect(options?.headers?.eventId).toBe(event.id);
+    expect(options?.headers?.eventType).toBe(
+      EventType.TELEGRAM_NOTIFICATION_CREATED,
+    );
+    expect(options?.headers?.deadLetterReason).toBe('Invalid Telegram chat id');
+    expect(options?.headers?.['x-retry-count']).toBe(2);
     expect(mockChannel.ack).toHaveBeenCalledWith(message);
     expect(mockChannel.sendToQueue).not.toHaveBeenCalled();
     expect(processedEventsStore.add).not.toHaveBeenCalled();

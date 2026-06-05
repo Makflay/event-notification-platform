@@ -1,7 +1,12 @@
 import { z } from 'zod';
 
+const portSchema =
+  process.env.NODE_ENV === 'test'
+    ? z.coerce.number().int().nonnegative()
+    : z.coerce.number().int().positive();
+
 const producerEnvSchema = z.object({
-  PRODUCER_PORT: z.coerce.number().int().positive().default(3000),
+  PRODUCER_PORT: portSchema.default(3000),
   RABBITMQ_URL: z
     .string()
     .min(1)

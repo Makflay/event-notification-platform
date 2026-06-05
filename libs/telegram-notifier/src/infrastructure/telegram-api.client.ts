@@ -40,6 +40,7 @@ export class TelegramApiClient {
           chat_id: chatId,
           text,
         }),
+        signal: abortController.signal,
       });
 
       if (!res.ok) {
@@ -52,7 +53,7 @@ export class TelegramApiClient {
         throw error;
       }
 
-      if (error instanceof Error && error.message === 'AbortError') {
+      if (error instanceof Error && error.name === 'AbortError') {
         this.logger.error('Telegram API request timeout');
 
         throw new TelegramApiError(

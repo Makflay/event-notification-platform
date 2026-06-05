@@ -190,7 +190,6 @@ export class QueueListenerService implements OnModuleInit, OnModuleDestroy {
   private deserializeMessage(message: ConsumeMessage): EventDto {
     const rawContent = message.content.toString('utf-8');
     let parsed: unknown;
-    //const
     try {
       parsed = JSON.parse(rawContent);
     } catch (error) {

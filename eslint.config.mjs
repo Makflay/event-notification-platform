@@ -10,7 +10,12 @@ const __dirname = dirname(fileURLToPath(import.meta.url));
 
 export default tseslint.config(
   {
-    ignores: ['eslint.config.mjs', 'webpack.config.js', 'jest.config.cjs'],
+    ignores: [
+      'eslint.config.mjs',
+      'webpack.config.js',
+      'jest.config.cjs',
+      './test/jest-e2e.config.cjs',
+    ],
   },
   eslint.configs.recommended,
   ...tseslint.configs.recommendedTypeChecked,

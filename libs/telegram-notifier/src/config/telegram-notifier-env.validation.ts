@@ -1,7 +1,12 @@
 import { z } from 'zod';
 
+const portSchema =
+  process.env.NODE_ENV === 'test'
+    ? z.coerce.number().int().nonnegative()
+    : z.coerce.number().int().positive();
+
 const telegramNotifierEnvSchema = z.object({
-  TELEGRAM_NOTIFIER_PORT: z.coerce.number().int().positive().default(3002),
+  TELEGRAM_NOTIFIER_PORT: portSchema.default(3002),
   TELEGRAM_BOT_TOKEN: z.string().min(1),
   TELEGRAM_CHAT_ID: z.string().min(1),
 });

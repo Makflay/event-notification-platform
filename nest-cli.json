@@ -39,12 +39,12 @@
       }
     },
     "telegram-notifier": {
-      "type": "application",
+      "type": "library",
       "root": "apps/telegram-notifier",
-      "entryFile": "main",
-      "sourceRoot": "apps/telegram-notifier/src",
+      "entryFile": "index",
+      "sourceRoot": "libs/telegram-notifier/src",
       "compilerOptions": {
-        "tsConfigPath": "apps/telegram-notifier/tsconfig.app.json"
+        "tsConfigPath": "libs/telegram-notifier/tsconfig.lib.json"
       }
     }
   }

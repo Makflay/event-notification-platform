@@ -43,17 +43,6 @@ services:
         condition: service_healthy
     networks:
       - event-notification-network
-  telegram-notifier:
-    build:
-      context: .
-      dockerfile: apps/telegram-notifier/Dockerfile
-    env_file:
-      - .env.docker
-    container_name: event-notification-telegram-notifier
-    ports:
-      - '3002:3002'
-    networks:
-      - event-notification-network
 
 networks:
   event-notification-network:

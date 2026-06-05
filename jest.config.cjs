@@ -9,7 +9,7 @@ module.exports = {
 
   setupFilesAfterEnv: ['<rootDir>/test/jest.setup.ts'],
 
-  roots: ['<rootDir>/apps/', '<rootDir>/libs/'],
+  roots: ['<rootDir>/test/', '<rootDir>/apps/', '<rootDir>/libs/'],
 
   collectCoverageFrom: ['**/*.(t|j)s'],
 
@@ -18,6 +18,9 @@ module.exports = {
   moduleNameMapper: {
     '^@app/shared$': '<rootDir>/libs/shared/src',
     '^@app/shared/(.*)$': '<rootDir>/libs/shared/src/$1',
+    '^@app/telegram-notifier$': '<rootDir>/libs/telegram-notifier/src',
+    '^@app/telegram-notifier/(.*)$':
+      '<rootDir>/libs/telegram-notifier/src/$1',
   },
 
   testEnvironment: 'node',
